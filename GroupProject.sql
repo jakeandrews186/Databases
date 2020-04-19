@@ -2,7 +2,7 @@ CREATE DATABASE GroupProject;
 
 CREATE TABLE Class 
 (
-	c_id INT NOT NULL AUTO_INCREMENT,
+    c_id INT NOT NULL AUTO_INCREMENT,
     c_number VARCHAR(5) NOT NULL,
     term VARCHAR(4) NOT NULL,
     sec_number INT AUTO_INCREMENT NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE Class
 
 CREATE TABLE Category 
 (
-	cg_id INT NOT NULL,
+    cg_id INT NOT NULL AUTO_INCREMENT,
     c_id INT NOT NULL,
     name VARCHAR(20) NOT NULL,
     weight DECIMAL(2,2) NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE Category
 
 CREATE TABLE Student
 (
-	s_id INT NOT NULL,
+    s_id INT NOT NULL AUTO_INCREMENT,
     user_name VARCHAR(20) NOT NULL,
     name VARCHAR(20) NOT NULL,
     PRIMARY KEY (s_id)
@@ -30,7 +30,7 @@ CREATE TABLE Student
 
 CREATE TABLE Assignment 
 (
-    a_id INT NOT NULL,
+    a_id INT NOT NULL AUTO_INCREMENT,
     cg_id INT NOT NULL,
     name VARCHAR(20) NOT NULL,
     description VARCHAR(100), 
@@ -44,7 +44,7 @@ CREATE TABLE Assignment
 
 CREATE TABLE Grade
 (
-	g_id INT NOT NULL, 
+    g_id INT NOT NULL AUTO_INCREMENT, 
     cg_id INT NOT NULL,
     s_id INT NOT NULL,
     c_id INT NOT NULL,
