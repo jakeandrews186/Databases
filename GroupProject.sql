@@ -38,7 +38,6 @@ CREATE TABLE Assignment
     s_id INT NOT NULL,
     grade VARCHAR(2) NOT NULL,
     PRIMARY KEY (a_id),
-    FOREIGN KEY (s_id) REFERENCES Student(s_id),
     FOREIGN KEY (cg_id) REFERENCES Category(cg_id),
     FOREIGN KEY (s_id) REFERENCES Student(s_id)
 ); 
@@ -52,6 +51,7 @@ CREATE TABLE Grade
     a_id INT NOT NULL, 
     grade VARCHAR(2) NOT NULL, 
     PRIMARY KEY (g_id),
+    FOREIGN KEY (s_id) REFERENCES Student(s_id),
     FOREIGN KEY (cg_id) REFERENCES Category(cg_id),
     FOREIGN KEY (c_id) REFERENCES Class(c_id),
     FOREIGN KEY (a_id) REFERENCES Assignment(a_id)
