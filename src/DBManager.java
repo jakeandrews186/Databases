@@ -1,4 +1,7 @@
+
 import java.util.Scanner;
+import java.sql.*;  
+import java.lang.*;
 
 /**
  * Class for the database manager for CS410
@@ -7,7 +10,15 @@ import java.util.Scanner;
  */
 public class DBManager {
 	
+	private static java.sql.Connection con;
 	public static void main(String[] args) {
+		try {
+			java.lang.Class.forName("com.mysql.jdbc.Driver");
+			con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/groupproject?user=root&useSSL=false","root","root");  
+		} catch (ClassNotFoundException | SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}  
 		Scanner scan = new Scanner(System.in);
 		while(true)
 		{
@@ -78,6 +89,21 @@ public class DBManager {
 	 */
 	private static void showGradebook() {
 		// TODO Auto-generated method stub
+		
+		Statement stmt;
+		try {
+			stmt = con.createStatement();
+			ResultSet rs=stmt.executeQuery("select * from grade");  
+			while(rs.next())
+			{
+				System.out.println(rs.getInt(1)+"  "+rs.getString(2)+"  "+rs.getString(3));  
+			}
+			con.close(); 
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}  
+
 		
 	}
 
