@@ -2,13 +2,18 @@
 public class Category 
 {
 	private int cg_id; 
-	private int c_id; 
+	//private int c_id; 
 	private String name; 
 	private long weight; 
 	
-	public Category (int C_id, String Name, long Weight)
+//	public Category (int C_id, String Name, long Weight)
+//	{
+//		this.c_id = C_id;
+//		this.name = Name;
+//		this.weight = Weight; 
+//	}
+	public Category (String Name, long Weight) //deleted c_id
 	{
-		this.c_id = C_id;
 		this.name = Name;
 		this.weight = Weight; 
 	}
@@ -18,10 +23,10 @@ public class Category
 		return this.cg_id; 
 	}
 	
-	public int get_c_id()
-	{
-		return this.c_id; 
-	}
+//	public int get_c_id()
+//	{
+//		return this.c_id; 
+//	}
 	
 	public String get_name()
 	{
@@ -33,10 +38,10 @@ public class Category
 		return this.weight; 
 	}
 	
-	public void set_c_id(int C_id)
-	{
-		this.cg_id = C_id; 
-	}
+//	public void set_c_id(int C_id)
+//	{
+//		this.cg_id = C_id; 
+//	}
 	
 	public void set_name(String Name)
 	{
