@@ -139,17 +139,59 @@ public class DBManager {
 	 * show all students with ‘string’ in their name or username (case-insensitive)
 	 * @param string
 	 */
-	private static void showStudents(String string) {
-		// TODO Auto-generated method stub
-		
+	private static void showStudents(String string) 
+	{
+		String query = "CALL showStudents2(?);";
+		try
+		{
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setString(1, string);
+			ResultSet rs = stmt.executeQuery();
+			while(rs.next())
+			{
+                System.out.println("Students with " + string + " " + "in their name or user name: " + rs.getInt("s_id") + " " + rs.getString("user_name") + " " + 
+                		rs.getString("l_name") + " " + rs.getString("f_name"));
+
+			}
+			conn.close();
+		}
+		catch (SQLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**
 	 * show all students in the current class
 	 */
-	private static void showStudents() {
-		// TODO Auto-generated method stub
-		
+	private static void showStudents() 
+	{
+		String query = "CALL showStudents1(?);";
+		try
+		{
+			if (selectedClass == -1)
+			{
+				System.out.println("No class currently selected.");
+				return;
+			}
+			
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setInt(1, selectedClass);
+			ResultSet rs = stmt.executeQuery();
+			while(rs.next())
+			{
+                System.out.println("Students in Current Class: " + rs.getInt("s_id") + " " + rs.getString("user_name") + " " + 
+                		rs.getString("l_name") + " " + rs.getString("f_name"));
+
+			}
+			conn.close();
+		}
+		catch (SQLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -159,7 +201,35 @@ public class DBManager {
 	 */
 	private static void addStudent(String username) 
 	{
-		// TODO Auto-generated method stub
+		String query = "CALL addStudent2(?, ?);";
+		try 
+		{
+			if (selectedClass == -1)
+			{
+				System.out.println("No class currently selected.");
+				return;
+			}
+			
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setString(1, username);
+			stmt.setInt(2, selectedClass);
+			ResultSet rs = stmt.executeQuery();
+			
+			if (!rs.first()) //student successfully added
+			{
+				return; 
+			}
+			else
+			{
+				System.out.println("User name not found");
+			}
+
+			conn.close();
+		} catch (SQLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 		
 	}
 
@@ -191,7 +261,7 @@ public class DBManager {
 			stmt.setString(4, first);
 			ResultSet rs = stmt.executeQuery();
 
-			String query2 = "CALL addStudent(?, ?, ?, ?, ?);";
+			String query2 = "CALL addStudent1(?, ?, ?, ?, ?);";
 			CallableStatement stmt2 = conn.prepareCall(query2);
 			stmt2.setString(1, username);
 			stmt2.setInt(2, Integer.parseInt(studentID));
@@ -218,7 +288,6 @@ public class DBManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}		
-		
 	}
 	
 
