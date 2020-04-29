@@ -171,13 +171,48 @@ BEGIN
 END $$
 
 
--- the requirements for the below proc are super confusing. This proc is not even nearly done. I am gonna need your help on this. 
 DELIMITER $$
-CREATE PROCEDURE addStudent(IN user_name0 VARCHAR(20), s_id0 INT, l_name0 VARCHAR(20), f_name0 VARCHAR(20)) -- says we need to add a student and enroll them in the current class. What current class?!? I am not sure if I am just being dumb or the assignment specs aren't super clear. 
+CREATE PROCEDURE updateStudent(IN user_name0 VARCHAR(20), s_id0 INT, l_name0 VARCHAR(20), f_name0 VARCHAR(20)) 
 BEGIN
-	INSERT INTO Student (s_id, user_name, l_name, f_name) VALUES (s_id0, user_name0, l_name0, f_name0);
+	IF CONCAT(f_name0, " ", l_name0) = (SELECT CONCAT(f_name0, " ", l_name0) FROM Student s WHERE s.s_id = s_id0) THEN
+		UPDATE Student SET f_name = f_name0, l_name = l_name0 WHERE s_id = s_id0;
+        SELECT "updated";
+	END IF;
 END $$
 
-/* I am skipping all the procs under Student Management. I think we are gonna have to ask the professor what she means by "current class".*/
+DELIMITER $$
+CREATE PROCEDURE addStudent1(IN user_name0 VARCHAR(20), s_id0 INT, l_name0 VARCHAR(20), f_name0 VARCHAR(20), c_id0 INT) 
+BEGIN
+	INSERT INTO Student (user_name, s_id, l_name, f_name, c_id) VALUES (user_name0, s_id0, l_name0, f_name0, c_id0);
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE addStudent2(IN user_name0 VARCHAR(20), c_id0 INT)
+BEGIN 
+	IF user_name0 IN (SELECT user_name FROM Student) THEN
+		INSERT INTO Student (user_name, s_id, l_name, f_name, c_id) VALUES 
+		(user_name0, 
+		(SELECT s_id FROM Student WHERE user_name = user_name0), 
+		(SELECT l_name FROM Student WHERE user_name = user_name0), 
+		(SELECT f_name FROM Student WHERE user_name = user_name0), 
+		c_id0);
+	ELSE
+		SELECT "error";
+	END IF; 
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE showStudents1(IN c_id0 INT)
+BEGIN
+	SELECT * FROM Student WHERE c_id = c_id0;
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE showStudents2(IN str0 VARCHAR(20))
+BEGIN
+	SELECT * FROM Student WHERE l_name LIKE '%str0' OR f_name LIKE '%str0' OR user_name LIKE '%str0';
+END $$
+
+
 
 
