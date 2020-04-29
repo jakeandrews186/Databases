@@ -175,7 +175,49 @@ public class DBManager {
 	 */
 	private static void addStudent(String username, String studentID, String last, String first) 
 	{
-		// TODO Auto-generated method stub
+		String query = "CALL updateStudent(?, ?, ?, ?);";
+		try 
+		{
+			if (selectedClass == -1)
+			{
+				System.out.println("No class currently selected.");
+				return;
+			}
+			
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setString(1, username);
+			stmt.setInt(2, Integer.parseInt(studentID));
+			stmt.setString(3, last);
+			stmt.setString(4, first);
+			ResultSet rs = stmt.executeQuery();
+
+			String query2 = "CALL addStudent(?, ?, ?, ?, ?);";
+			CallableStatement stmt2 = conn.prepareCall(query2);
+			stmt2.setString(1, username);
+			stmt2.setInt(2, Integer.parseInt(studentID));
+			stmt2.setString(3, last);
+			stmt2.setString(4, first);
+			stmt2.setInt(5, selectedClass); 
+
+			if(!rs.first()) //name not being updated
+			{
+				stmt2.executeQuery(); //adding student
+			}
+			
+			else //if name is being updated
+			{
+				while(rs.next())
+				{
+					stmt2.executeQuery();
+					System.out.println("Selected student's name has been updated.");
+				}
+			}
+			conn.close();
+		} catch (SQLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 		
 	}
 	
@@ -198,7 +240,7 @@ public class DBManager {
 			stmt.setString(3, description);
 			stmt.setInt(4, Integer.parseInt(points));
 
-			ResultSet rs = stmt.executeQuery();
+			stmt.executeQuery();
 			conn.close();
 		} catch (SQLException e) 
 		{
@@ -245,7 +287,7 @@ public class DBManager {
 			CallableStatement stmt = conn.prepareCall(query);
 			stmt.setString(1, name);
 			stmt.setLong(2, Long.parseLong(weight));
-			ResultSet rs = stmt.executeQuery();
+			stmt.executeQuery();
 			conn.close();
 		} 
 		catch (SQLException e) 
@@ -432,7 +474,7 @@ public class DBManager {
 			stmt.setInt(3, Integer.parseInt(section));
 			stmt.setString(4, title);
 
-			ResultSet rs = stmt.executeQuery();
+			stmt.executeQuery();
 			conn.close();
 		} catch (SQLException e) 
 		{
