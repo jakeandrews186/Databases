@@ -10,14 +10,25 @@ DROP TABLE IF EXISTS Grade;
 
 DROP PROCEDURE IF EXISTS listClass; 
 
+
+CREATE TABLE Term
+(
+	t_id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(5) NOT NULL,
+    start_date DATE NOT NULL,
+    PRIMARY KEY (t_id)
+);
+
 CREATE TABLE Class 
 (
 	c_id INT NOT NULL AUTO_INCREMENT,
     c_number VARCHAR(10) NOT NULL,
-    term VARCHAR(5) NOT NULL,
+    term INT NOT NULL,
     sec_number INT NOT NULL,
     description VARCHAR(100),
-    PRIMARY KEY (c_id)
+    PRIMARY KEY (c_id),
+	FOREIGN KEY (term) REFERENCES Term(t_id)
+
 );
 
 
@@ -68,15 +79,6 @@ CREATE TABLE Grade
     FOREIGN KEY (cg_id) REFERENCES Category(cg_id),
     FOREIGN KEY (c_id) REFERENCES Class(c_id),
     FOREIGN KEY (a_id) REFERENCES Assignment(a_id)
-);
-
-CREATE TABLE Term
-(
-	t_id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(5) NOT NULL,
-    start_date DATE NOT NULL,
-    PRIMARY KEY (t_id),
-    FOREIGN KEY (name) REFERENCES Class(term)
 );
 
 DELIMITER $$
