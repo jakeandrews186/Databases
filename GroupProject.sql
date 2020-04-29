@@ -133,11 +133,11 @@ BEGIN
 END $$
 
 DELIMITER $$
-CREATE PROCEDURE showClass() -- what does "currently active class" mean? current term?? 
+CREATE PROCEDURE showClass(IN c_id0 INT) 
 BEGIN 
 	SELECT *
     FROM Class
-    WHERE term = 'SP2020';
+    where c_id = c_id0;
 END $$
 
 DELIMITER $$

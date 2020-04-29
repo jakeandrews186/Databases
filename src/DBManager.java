@@ -10,11 +10,12 @@ import java.lang.*;
  */
 public class DBManager {
 	
-	private static java.sql.Connection con;
+	private static java.sql.Connection conn;
+	private static int selectedClass = -1;  //ID of the class currently selected
 	public static void main(String[] args) {
 		try {
 			java.lang.Class.forName("com.mysql.jdbc.Driver");
-			con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/groupproject?user=root&useSSL=false","root","root");  
+			conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/groupproject?user=root&useSSL=false","root","root");  
 		} catch (ClassNotFoundException | SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -92,13 +93,13 @@ public class DBManager {
 		
 		Statement stmt;
 		try {
-			stmt = con.createStatement();
+			stmt = conn.createStatement();
 			ResultSet rs=stmt.executeQuery("select * from grade");  
 			while(rs.next())
 			{
 				System.out.println(rs.getInt(1)+"  "+rs.getString(2)+"  "+rs.getString(3));  
 			}
-			con.close(); 
+			conn.close(); 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -218,8 +219,23 @@ public class DBManager {
 	 * show the currently active class
 	 */
 	private static void showCurrentClass() {
-		// TODO Auto-generated method stub
-		
+		if (selectedClass == -1)
+		{
+			System.out.println("No class currently selected.");
+			return;
+		}
+		String query = "{CALL show_class(?)}";
+		try {
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setInt(1, selectedClass);
+			ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                System.out.println("Current class: " + rs.getString("description") + " - " +
+            "section " + rs.getInt("sec_number"));
+            }
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}			
 	}
 
 	/**
@@ -229,8 +245,20 @@ public class DBManager {
 	 * @param section
 	 */
 	private static void selectClass(String code, String term, String section) {
-		// TODO Auto-generated method stub
-		
+		String query = "{CALL select_class3(?, ?, ?)}";
+		try {
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setString(1, code);
+			stmt.setString(2, term);
+			stmt.setInt(3, Integer.parseInt(section));			
+			ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                System.out.println("Selected Class: " + rs.getString("description"));
+                selectedClass = rs.getInt("c_id");
+            }
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}			
 	}
 
 	/**
@@ -241,8 +269,19 @@ public class DBManager {
 	 * @param title - the title of the class
 	 */
 	private static void newClass(String code, String term, String section, String title) {
-		// TODO Auto-generated method stub
-		
+		String query = "{CALL create_class(?, ?, ?, ?)}";
+		try {
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setString(1, code);
+			stmt.setString(2, term);
+			stmt.setInt(3, Integer.parseInt(section));
+			stmt.setString(4, title);
+
+			ResultSet rs = stmt.executeQuery();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 	}
 
 }
