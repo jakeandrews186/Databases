@@ -28,7 +28,6 @@ CREATE TABLE Class
     description VARCHAR(100),
     PRIMARY KEY (c_id),
 	FOREIGN KEY (term) REFERENCES Term(t_id)
-
 );
 
 
@@ -61,7 +60,7 @@ CREATE TABLE Assignment -- we should probably get rid of s_id
     description VARCHAR(100), 
     point_value INT NOT NULL,
     -- s_id INT NOT NULL,
-    grade VARCHAR(2),
+    -- grade INT,
     PRIMARY KEY (a_id),
     -- FOREIGN KEY (s_id) REFERENCES Student(s_id),
     FOREIGN KEY (cg_id) REFERENCES Category(cg_id)
@@ -72,12 +71,12 @@ CREATE TABLE Grade
 	g_id INT NOT NULL AUTO_INCREMENT, 
     cg_id INT NOT NULL,
     s_id INT NOT NULL,
-    c_id INT NOT NULL,
+    -- c_id INT NOT NULL,
     a_id INT NOT NULL, 
-    grade VARCHAR(2) NOT NULL, 
+    grade INT, 
     PRIMARY KEY (g_id),
     FOREIGN KEY (cg_id) REFERENCES Category(cg_id),
-    FOREIGN KEY (c_id) REFERENCES Class(c_id),
+    -- FOREIGN KEY (c_id) REFERENCES Class(c_id),
     FOREIGN KEY (a_id) REFERENCES Assignment(a_id)
 );
 
@@ -174,9 +173,9 @@ END $$
 DELIMITER $$
 CREATE PROCEDURE updateStudent(IN user_name0 VARCHAR(20), s_id0 INT, l_name0 VARCHAR(20), f_name0 VARCHAR(20)) 
 BEGIN
-	IF CONCAT(f_name0, " ", l_name0) = (SELECT CONCAT(f_name0, " ", l_name0) FROM Student s WHERE s.s_id = s_id0) THEN
+	IF CONCAT(f_name0, " ", l_name0) != (SELECT CONCAT(f_name0, " ", l_name0) FROM Student s WHERE s.s_id = s_id0) THEN
 		UPDATE Student SET f_name = f_name0, l_name = l_name0 WHERE s_id = s_id0;
-        SELECT "updated";
+        SELECT "updated"; 
 	END IF;
 END $$
 
@@ -210,9 +209,32 @@ END $$
 DELIMITER $$
 CREATE PROCEDURE showStudents2(IN str0 VARCHAR(20))
 BEGIN
-	SELECT * FROM Student WHERE l_name LIKE '%str0' OR f_name LIKE '%str0' OR user_name LIKE '%str0';
+	SELECT * FROM Student WHERE l_name LIKE '%str%' OR f_name LIKE '%str0' OR user_name LIKE '%str%';
 END $$
 
 
+DELIMITER $$
+CREATE PROCEDURE assignGrade(IN a_name0 VARCHAR(20), user_name0 VARCHAR(20), grade0 INT)
+BEGIN 
+    DECLARE grade1 INT;
+    IF (SELECT point_value FROM Assignment WHERE name = a_name0) >= grade0 THEN
+		SET grade1 = (SELECT g.grade FROM Grade 
+						JOIN Assignment a ON a.a_id = g.a_id
+						JOIN Student s ON s.s_id = g.s_id
+						WHERE a.name = a_name0 AND s.user_name = user_name0);
+		IF grade1 != grade0 THEN
+			UPDATE Grade g SET g.grade = grade0 
+				WHERE g.a_id = (SELECT a.a_id FROM Assignment a WHERE a_name0 = a.name)
+				AND g.s_id = (SELECT s.s_id FROM Student s WHERE user_name0 = s.user_name);
+	END IF;
+	ELSE
+		(SELECT point_value FROM Assignment WHERE name = a_name0); -- if the number of points exceeds the number of points configured for the assignment
+	END IF;
+END $$
 
+
+DELIMITER $$
+CREATE PROCEDURE studentGrades(IN s_id0 INT)
+BEGIN 
+	SELECT 
 
