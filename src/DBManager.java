@@ -77,12 +77,8 @@ public class DBManager {
 				showGrades(inputs[1]);
 			case "gradebook":
 				showGradebook();
-
 			}
-			
 		}
-		
-		
 	}
 
 	/**
@@ -104,9 +100,7 @@ public class DBManager {
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}  
-
-		
+		}  		
 	}
 
 	/**
@@ -115,8 +109,9 @@ public class DBManager {
 		category, along with the overall grade in the class.
 	 * @param username
 	 */
-	private static void showGrades(String username) {
-		// TODO Auto-generated method stub
+	private static void showGrades(String username) 
+	{
+		
 		
 	}
 
@@ -130,9 +125,34 @@ public class DBManager {
 	 * @param username
 	 * @param grade
 	 */
-	private static void grade(String assignment, String username, String grade) {
-		// TODO Auto-generated method stub
+	private static void grade(String assignment, String username, String grade) 
+	{
+		String query = "CALL assignGrade(?, ?, ?);";
 		
+		//assignGrade(IN a_name0 VARCHAR(20), user_name0 VARCHAR(20), grade0 INT)
+		try
+		{
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setString(1, assignment);
+			stmt.setString(2, username);
+			stmt.setInt(3, Integer.parseInt(grade));
+			ResultSet rs = stmt.executeQuery();
+			
+			if(!rs.first()) // if the number of points does not exceed the number of points configured for the assignment
+			{
+				return;
+			}
+			else
+			{
+				System.out.println("The number of points entered exceeds the number of points configured for the assignment(" + rs.getInt(1) + ")");
+			}
+			conn.close();
+		}
+		catch (SQLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -221,7 +241,7 @@ public class DBManager {
 			}
 			else
 			{
-				System.out.println("User name not found");
+				System.out.println("Username not found");
 			}
 
 			conn.close();
@@ -269,7 +289,7 @@ public class DBManager {
 			stmt2.setString(4, first);
 			stmt2.setInt(5, selectedClass); 
 
-			if(!rs.first()) //name not being updated
+			if(!rs.next()) //name not being updated
 			{
 				stmt2.executeQuery(); //adding student
 			}
@@ -553,3 +573,4 @@ public class DBManager {
 	}
 
 }
++
