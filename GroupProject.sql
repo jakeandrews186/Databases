@@ -235,12 +235,13 @@ END $$
 
 
 DELIMITER $$
-CREATE PROCEDURE studentGrades(IN s_id0 INT)
+CREATE PROCEDURE studentGrades(IN s_id0 INT, c_id0 INT)
 BEGIN 
 	select a.a_id, a.name as Assignment, cg.name as Category, cg.weight, a.point_value, g.grade from assignment a
 	join grade g on g.a_id = a.a_id
     join category cg on cg.cg_id = a.cg_id
 	where g.s_id = s_id0
+    and a.c_id = c_id0
     order by a.cg_id;
 END $$
 

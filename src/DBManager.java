@@ -136,11 +136,12 @@ public class DBManager {
 			e.printStackTrace();
 		}
 		//then get individual assignment grades
-		String query0 = "CALL studentGrades(?);";
+		String query0 = "CALL studentGrades(?, ?);";
 		try
 		{
 			CallableStatement stmt = conn.prepareCall(query0);
 			stmt.setInt(1, studentID);
+			stmt.setInt(1, selectedClass);
 			ResultSet rs = stmt.executeQuery();
 			String category = "";
 			String firstCategory = "";
