@@ -34,11 +34,11 @@ CREATE TABLE Class
 CREATE TABLE Category -- maybe delete c_id? 
 (
 	cg_id INT NOT NULL AUTO_INCREMENT,
-    -- c_id INT NOT NULL,
+    c_id INT NOT NULL,
     name VARCHAR(20) NOT NULL,
     weight DECIMAL(2,2) NOT NULL,
-    PRIMARY KEY(cg_id)
-    -- FOREIGN KEY (c_id) REFERENCES Class(c_id)
+    PRIMARY KEY(cg_id),
+    FOREIGN KEY (c_id) REFERENCES Class(c_id)
 );
 
 CREATE TABLE Student -- s_id is not auto incremented, looks like it should always be given by user?
@@ -140,10 +140,11 @@ BEGIN
 END $$
 
 DELIMITER $$
-CREATE PROCEDURE showCategories()
+CREATE PROCEDURE showCategories(IN c_id0 INT)
 BEGIN 
 	SELECT cg_id, name, weight
-    FROM Category;
+    FROM Category
+    where c_id = c_id0;
 END $$
 
 DELIMITER $$
@@ -236,5 +237,16 @@ END $$
 DELIMITER $$
 CREATE PROCEDURE studentGrades(IN s_id0 INT)
 BEGIN 
-	SELECT 
+	select a.a_id, a.name as Assignment, cg.name as Category, cg.weight, a.point_value, g.grade from assignment a
+	join grade g on g.a_id = a.a_id
+    join category cg on cg.cg_id = a.cg_id
+	where g.s_id = s_id0
+    order by a.cg_id;
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE getStudent(IN username varchar(20))
+BEGIN 
+	select s_id from student where user_name = username;
+END $$
 

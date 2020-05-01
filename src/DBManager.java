@@ -1,6 +1,10 @@
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Scanner;
-import java.sql.*;  
+import java.util.Set;
+import java.sql.*;
+import java.awt.List;
 import java.lang.*;
 
 /**
@@ -112,7 +116,74 @@ public class DBManager {
 	private static void showGrades(String username) 
 	{
 		
-		
+		//first, get student
+		int studentID;
+		String query = "CALL getStudent(?);";
+		try
+		{
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setString(1, username);
+			ResultSet rs = stmt.executeQuery();
+			while(rs.next())
+			{
+				studentID = rs.getInt(0);
+			}
+			conn.close();
+		}
+		catch (SQLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//then get individual assignment grades
+		String query0 = "CALL studentGrades(?);";
+		try
+		{
+			CallableStatement stmt = conn.prepareCall(query0);
+			stmt.setInt(1, studentID);
+			ResultSet rs = stmt.executeQuery();
+			String category = "";
+			String firstCategory = "";
+			int i = 0;
+			int overall = 0;
+			int overallPossible = 0;
+			int earned = 0;
+			int total = 0;
+			while(rs.next())
+			{
+				if (i==0)
+				{
+					category = rs.getString("Category");
+					firstCategory = rs.getString("Category");
+					i++;
+				}
+				if (rs.getString("Category") != category && rs.getString("Category") != firstCategory)
+				{
+					System.out.println();
+					System.out.println("Category Totals: " + category + " - " + earned + "/" + total);
+					System.out.println();
+
+					category = rs.getString("Category");
+					overall += earned;
+					overallPossible += total;
+					earned = 0;
+					total = 0;
+					
+				}
+				System.out.println(rs.getString("Assignment") + " - " + rs.getInt("grade") + "/" + rs.getInt("point_value") + " - " + rs.getString("Category") );
+				earned += rs.getInt("grade");
+				total += rs.getInt("point_value");
+			}
+			System.out.println();
+			System.out.println("Totals for this class: " + overall + "/" + overallPossible);
+
+			conn.close();
+		}
+		catch (SQLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**
