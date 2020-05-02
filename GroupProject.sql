@@ -8,26 +8,14 @@ DROP TABLE IF EXISTS Assignment;
 DROP TABLE IF EXISTS Category;
 DROP TABLE IF EXISTS Grade; 
 
-DROP PROCEDURE IF EXISTS listClass; 
-
-
-CREATE TABLE Term
-(
-	t_id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(5) NOT NULL,
-    start_date DATE NOT NULL,
-    PRIMARY KEY (t_id)
-);
-
 CREATE TABLE Class 
 (
 	c_id INT NOT NULL AUTO_INCREMENT,
     c_number VARCHAR(10) NOT NULL,
-    term INT NOT NULL,
+    term varchar(5) NOT NULL,
     sec_number INT NOT NULL,
     description VARCHAR(100),
-    PRIMARY KEY (c_id),
-	FOREIGN KEY (term) REFERENCES Term(t_id)
+    PRIMARY KEY (c_id)
 );
 
 
@@ -43,7 +31,7 @@ CREATE TABLE Category -- maybe delete c_id?
 
 CREATE TABLE Student -- s_id is not auto incremented, looks like it should always be given by user?
 (
-	s_id INT NOT NULL, 
+	s_id INT NOT NULL auto_increment, 
     user_name VARCHAR(20) NOT NULL,
     l_name VARCHAR(20) NOT NULL,
     f_name VARCHAR(20) NOT NULL,
@@ -59,10 +47,7 @@ CREATE TABLE Assignment -- we should probably get rid of s_id
     name VARCHAR(20) NOT NULL,
     description VARCHAR(100), 
     point_value INT NOT NULL,
-    -- s_id INT NOT NULL,
-    -- grade INT,
     PRIMARY KEY (a_id),
-    -- FOREIGN KEY (s_id) REFERENCES Student(s_id),
     FOREIGN KEY (cg_id) REFERENCES Category(cg_id)
 ); 
 
@@ -91,7 +76,7 @@ CREATE PROCEDURE listClass()
 BEGIN
 	SELECT c.c_number, c.description, COUNT(s.s_id)
     FROM Class c 
-	JOIN Student s ON c.c_id = s.c_id
+	LEFT JOIN Student s ON c.c_id = s.c_id
     GROUP BY c.c_id;
 END $$
 
@@ -104,9 +89,7 @@ BEGIN
 	IF (num_of_secs = 1) THEN
     SELECT c_id, c_number, term, description
     FROM Class c
-    JOIN Term on t.name = c.term
     WHERE c_number = c_number0 AND sec_number = 1
-    ORDER BY t.start_date DESC
     LIMIT 1;
     END IF;
 END $$

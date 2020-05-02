@@ -27,61 +27,83 @@ public class DBManager {
 		Scanner scan = new Scanner(System.in);
 		while(true)
 		{
+			System.out.print("> ");
 			String command = scan.nextLine();
 			String[] inputs = command.split(" ");
 			switch (inputs[0])
 			{
 			case "new-class":
 				newClass(inputs[1], inputs[2], inputs[3], inputs[4]);
+				continue;
 			case "list-classes":
 				listClass();
+				continue;
 			case "select-class":
 				if (inputs.length == 2)
 				{
 					selectClass1(inputs[1]);
+					continue;
 				}
 				else if (inputs.length == 3)
 				{
 					selectClass2(inputs[1], inputs[2]);
+					continue;
 
 				}
 				else if (inputs.length == 4)
 				{
 					selectClass3(inputs[1], inputs[2], inputs[3]);
-
+					continue;
 				}
 			case "show-class":
 				showCurrentClass();
+				continue;
 			case "show-categories":
 				showCategories();
+				continue;
 			case "add-category":
 				addCategory(inputs[1], inputs[2]);
+				continue;
 			case "show-assignment":
 				showAssignment();
+				continue;
 			case "add-assignment":
 				addAssignment(inputs[1], inputs[2], inputs[3], inputs[4]);
+				continue;
 			case "add-student":
 				if (inputs.length == 2)
 				{
 					addStudent(inputs[1]);
+					continue;
 				} else {
 					addStudent(inputs[1], inputs[2], inputs[3], inputs[4]);
+					continue;
 				}
 			case "show-students":
 				if (inputs.length == 2)
 				{
 					showStudents(inputs[1]);
+					continue;
 				}
 				else {
 					showStudents();
+					continue;
 				}
 			case "grade":
 				grade(inputs[1], inputs[2], inputs[3]);
+				continue;
 			case "student-grades":
 				showGrades(inputs[1]);
+				continue;
 			case "gradebook":
 				showGradebook();
-			}
+				continue;
+			case "exit":
+				System.exit(0);
+			default:
+				System.out.println("Command not recognized. Please try again.");
+				continue;
+		}
 		}
 	}
 
@@ -100,7 +122,6 @@ public class DBManager {
 			{
 				System.out.println(rs.getInt(1)+"  "+rs.getString(2)+"  "+rs.getString(3));  
 			}
-			conn.close(); 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -117,7 +138,7 @@ public class DBManager {
 	{
 		
 		//first, get student
-		int studentID;
+		int studentID = -1;
 		String query = "CALL getStudent(?);";
 		try
 		{
@@ -128,12 +149,17 @@ public class DBManager {
 			{
 				studentID = rs.getInt(0);
 			}
-			conn.close();
 		}
 		catch (SQLException e) 
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+		if (studentID == -1)
+		{
+			System.out.println("Student not found. Please try again.");
+			return;
 		}
 		//then get individual assignment grades
 		String query0 = "CALL studentGrades(?, ?);";
@@ -178,7 +204,6 @@ public class DBManager {
 			System.out.println();
 			System.out.println("Totals for this class: " + overall + "/" + overallPossible);
 
-			conn.close();
 		}
 		catch (SQLException e) 
 		{
@@ -218,7 +243,6 @@ public class DBManager {
 			{
 				System.out.println("The number of points entered exceeds the number of points configured for the assignment(" + rs.getInt(1) + ")");
 			}
-			conn.close();
 		}
 		catch (SQLException e) 
 		{
@@ -245,7 +269,6 @@ public class DBManager {
                 		rs.getString("l_name") + " " + rs.getString("f_name"));
 
 			}
-			conn.close();
 		}
 		catch (SQLException e) 
 		{
@@ -277,7 +300,6 @@ public class DBManager {
                 		rs.getString("l_name") + " " + rs.getString("f_name"));
 
 			}
-			conn.close();
 		}
 		catch (SQLException e) 
 		{
@@ -315,8 +337,6 @@ public class DBManager {
 			{
 				System.out.println("Username not found");
 			}
-
-			conn.close();
 		} catch (SQLException e) 
 		{
 			// TODO Auto-generated catch block
@@ -374,7 +394,6 @@ public class DBManager {
 					System.out.println("Selected student's name has been updated.");
 				}
 			}
-			conn.close();
 		} catch (SQLException e) 
 		{
 			// TODO Auto-generated catch block
@@ -402,7 +421,6 @@ public class DBManager {
 			stmt.setInt(4, Integer.parseInt(points));
 
 			stmt.executeQuery();
-			conn.close();
 		} catch (SQLException e) 
 		{
 			// TODO Auto-generated catch block
@@ -425,7 +443,6 @@ public class DBManager {
 			{
 				System.out.println(rs.getInt(1) + " " + rs.getString(2) + " " + rs.getInt(3) + "\n"); 
 			}
-			conn.close();
 		}
 		catch (SQLException e) 
 		{
@@ -449,7 +466,6 @@ public class DBManager {
 			stmt.setString(1, name);
 			stmt.setLong(2, Long.parseLong(weight));
 			stmt.executeQuery();
-			conn.close();
 		} 
 		catch (SQLException e) 
 		{
@@ -473,7 +489,6 @@ public class DBManager {
 			{
 				System.out.println(rs.getInt(1) + " " + rs.getString(2) + " " + rs.getLong(3) + "\n"); 
 			}
-			conn.close();
 		}
 		catch (SQLException e) 
 		{
@@ -491,7 +506,7 @@ public class DBManager {
 			System.out.println("No class currently selected.");
 			return;
 		}
-		String query = "{CALL show_class(?)}";
+		String query = "{CALL showClass(?)}";
 		try {
 			CallableStatement stmt = conn.prepareCall(query);
 			stmt.setInt(1, selectedClass);
@@ -512,24 +527,21 @@ public class DBManager {
 	 */
 	private static void selectClass1(String code) 
 	{
-		String query = "CALL select_class1(?);";
+		String query = "CALL selectClass1(?);";
 		try {
 			CallableStatement stmt = conn.prepareCall(query);
 			stmt.setString(1, code);	
 			ResultSet rs = stmt.executeQuery();
-			if(!rs.first())
-			{
-				System.out.println("Command failed as there are multiple sections.");
-			}
-			else
-			{
-	            while (rs.next()) 
-	            {
+			if (rs.next() == false) 
+			{ 
+				System.out.println("Class not found. Please try again."); 
+			} else { 
+				do { 
 	                System.out.println("Selected Class: " + rs.getString("description"));
 	                selectedClass = rs.getInt("c_id");
-	            }
+	                }
+				while (rs.next());
 			}
-			conn.close();
 		} 
 		catch (SQLException e) 
 		{
@@ -544,26 +556,23 @@ public class DBManager {
 	 */
 	private static void selectClass2(String code, String term) 
 	{
-		String query = "CALL select_class2(?, ?);";
+		String query = "CALL selectClass2(?, ?);";
 		try 
 		{
 			CallableStatement stmt = conn.prepareCall(query);
 			stmt.setString(1, code);
 			stmt.setString(2, term);	
 			ResultSet rs = stmt.executeQuery();
-			if(!rs.first())
-			{
-				System.out.println("Command failed as there are multiple sections.");
-			}
-			else
-			{
-	            while (rs.next()) 
-	            {
+			if (rs.next() == false) 
+			{ 
+				System.out.println("Class not found. Please try again."); 
+			} else { 
+				do { 
 	                System.out.println("Selected Class: " + rs.getString("description"));
 	                selectedClass = rs.getInt("c_id");
-	            }
+	                }
+				while (rs.next());
 			}
-			conn.close();
 		} 
 		catch (SQLException e) 
 		{
@@ -579,17 +588,23 @@ public class DBManager {
 	 */
 	private static void selectClass3(String code, String term, String section) 
 	{
-		String query = "CALL select_class3(?, ?, ?);";
+		String query = "CALL selectClass3(?, ?, ?);";
 		try {
 			CallableStatement stmt = conn.prepareCall(query);
 			stmt.setString(1, code);
 			stmt.setString(2, term);
 			stmt.setInt(3, Integer.parseInt(section));			
 			ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                System.out.println("Selected Class: " + rs.getString("description"));
-                selectedClass = rs.getInt("c_id");
-            }
+			if (rs.next() == false) 
+			{ 
+				System.out.println("Class not found. Please try again."); 
+			} else { 
+				do { 
+	                System.out.println("Selected Class: " + rs.getString("description"));
+	                selectedClass = rs.getInt("c_id");
+	                }
+				while (rs.next());
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}			
@@ -604,11 +619,18 @@ public class DBManager {
 		{
 			CallableStatement stmt = conn.prepareCall(query);
 			ResultSet rs = stmt.executeQuery();
-			while(rs.next())
-			{
-				System.out.println(rs.getInt(1) + " " + rs.getString(2) + " " + rs.getString(3) + "\n"); 
+			if (rs.next() == false) 
+			{ 
+				System.out.println("There are no classes to list.");
+			} else { 
+				System.out.println("Number | Description | # Students");
+				System.out.println();
+				do { 
+					System.out.println(rs.getString(1) + " " + rs.getString(2) + " " + rs.getString(3) + "\n"); 
+
+	                }
+				while (rs.next());
 			}
-			conn.close();
 		}
 		catch (SQLException e) 
 		{
@@ -636,13 +658,10 @@ public class DBManager {
 			stmt.setString(4, title);
 
 			stmt.executeQuery();
-			conn.close();
 		} catch (SQLException e) 
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}		
 	}
 
 }
-+
