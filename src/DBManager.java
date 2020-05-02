@@ -532,15 +532,39 @@ public class DBManager {
 			CallableStatement stmt = conn.prepareCall(query);
 			stmt.setString(1, code);	
 			ResultSet rs = stmt.executeQuery();
+			
+			int mostRecentYear = 0;
+			int classID = -1;
+			String mostRecentTerm = "";
+			String description = "";
 			if (rs.next() == false) 
 			{ 
 				System.out.println("Class not found. Please try again."); 
 			} else { 
-				do { 
-	                System.out.println("Selected Class: " + rs.getString("description"));
-	                selectedClass = rs.getInt("c_id");
+				do {
+					String term = rs.getString("term");
+					int year = Integer.parseInt(term.substring(2));
+					String semester = term.substring(0, 1);
+					if (year > mostRecentYear)
+					{
+						mostRecentYear = year;
+						classID = rs.getInt("c_id");
+						description = rs.getString("description");
+					} else if (year == mostRecentYear)
+					{
+						if (semester == "Fa")
+						{
+							mostRecentTerm = term;
+							classID = rs.getInt("c_id");
+							description = rs.getString("description");
+						}
+					}
+
 	                }
 				while (rs.next());
+				
+                System.out.println("Selected Class: " + description + " " + mostRecentTerm);
+                selectedClass = classID;
 			}
 		} 
 		catch (SQLException e) 
@@ -663,5 +687,7 @@ public class DBManager {
 			e.printStackTrace();
 		}		
 	}
+	
+
 
 }
