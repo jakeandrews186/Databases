@@ -315,31 +315,79 @@ public class DBManager {
 	 */
 	private static void addStudent(String username) 
 	{
-		String query = "CALL addStudent2(?, ?);";
+		if (selectedClass == -1)
+		{
+			System.out.println("No class currently selected.");
+			return;
+		}
+		
+
+		int studentID = -1;
+		String query0 = "CALL getStudentID(?);";
+
 		try 
 		{
-			if (selectedClass == -1)
-			{
-				System.out.println("No class currently selected.");
-				return;
-			}
-			
-			CallableStatement stmt = conn.prepareCall(query);
+			CallableStatement stmt = conn.prepareCall(query0);
 			stmt.setString(1, username);
-			stmt.setInt(2, selectedClass);
 			ResultSet rs = stmt.executeQuery();
+			while (rs.next())
+			{
+				studentID = rs.getInt(1);
+			}
 			
-			if (!rs.first()) //student successfully added
-			{
-				return; 
-			}
-			else
-			{
-				System.out.println("Username not found");
-			}
 		} catch (SQLException e) 
 		{
-			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (studentID == -1)
+		{
+			System.out.println("Student not found with username: " + username);
+			return;
+		}
+		String query2 = "CALL getSchoolID(?);";
+		
+		int schoolID = 0;
+		try 
+		{
+			CallableStatement stmt = conn.prepareCall(query2);
+			stmt.setString(1, username);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next())
+			{
+				schoolID = rs.getInt(1);
+			}
+			
+		} catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		String check = "CALL checkIfInClass(?, ?);";
+		try 
+		{
+			CallableStatement stmt = conn.prepareCall(check);
+			stmt.setInt(1, schoolID);
+			stmt.setInt(2, selectedClass);
+
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next())
+			{
+				 System.out.println("Student is already in the current class. ");
+				 return;
+			}
+			
+		} catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		String query = "CALL enrollStudent(?, ?);";
+		try 
+		{
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setInt(1, studentID);
+			stmt.setInt(2, selectedClass);
+			stmt.executeQuery();
+		} catch (SQLException e) 
+		{
 			e.printStackTrace();
 		}		
 		
@@ -357,48 +405,120 @@ public class DBManager {
 	 */
 	private static void addStudent(String username, String studentID, String last, String first) 
 	{
-		String query = "CALL updateStudent(?, ?, ?, ?);";
+		if (selectedClass == -1)
+		{
+			System.out.println("No class currently selected.");
+			return;
+		}
+		
+		String check = "CALL checkIfInClass(?, ?);";
 		try 
 		{
-			if (selectedClass == -1)
-			{
-				System.out.println("No class currently selected.");
-				return;
-			}
-			
-			CallableStatement stmt = conn.prepareCall(query);
-			stmt.setString(1, username);
-			stmt.setInt(2, Integer.parseInt(studentID));
-			stmt.setString(3, last);
-			stmt.setString(4, first);
+			CallableStatement stmt = conn.prepareCall(check);
+			stmt.setInt(1, Integer.parseInt(studentID));
+			stmt.setInt(2, selectedClass);
+
 			ResultSet rs = stmt.executeQuery();
-
-			String query2 = "CALL addStudent1(?, ?, ?, ?, ?);";
-			CallableStatement stmt2 = conn.prepareCall(query2);
-			stmt2.setString(1, username);
-			stmt2.setInt(2, Integer.parseInt(studentID));
-			stmt2.setString(3, last);
-			stmt2.setString(4, first);
-			stmt2.setInt(5, selectedClass); 
-
-			if(!rs.next()) //name not being updated
+			while (rs.next())
 			{
-				stmt2.executeQuery(); //adding student
+				 System.out.println("Student is already in the current class. ");
+				 
+					String query2 = "CALL updateStudent(?, ?, ?, ?);";
+					CallableStatement stmt2 = conn.prepareCall(query2);
+					stmt2.setString(1, username);
+					stmt2.setInt(2, Integer.parseInt(studentID));
+					stmt2.setString(3, last);
+					stmt2.setString(4, first);
+					
+					ResultSet rs2 = stmt2.executeQuery();
+					while (rs2.next())
+					{
+						String test = rs2.getString(1);
+						if (test.equals("updated"))
+						{
+							System.out.println("Selected student's name has been updated.");
+						}
+					}
+				 return;
 			}
 			
-			else //if name is being updated
-			{
-				while(rs.next())
-				{
-					stmt2.executeQuery();
-					System.out.println("Selected student's name has been updated.");
-				}
-			}
 		} catch (SQLException e) 
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}		
+		}
+		int existingStudent = -1;
+		String query0 = "CALL getStudentIDFromSchoolID(?);";
+
+		try 
+		{
+			CallableStatement stmt = conn.prepareCall(query0);
+			stmt.setInt(1, Integer.parseInt(studentID));
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next())
+			{
+				existingStudent = rs.getInt(1);
+			}
+			
+		} catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		
+		if (existingStudent != -1)
+		{
+			String query = "CALL enrollStudent(?, ?);";
+			try 
+			{
+				CallableStatement stmt = conn.prepareCall(query);
+				stmt.setInt(1, existingStudent);
+				stmt.setInt(2, selectedClass);
+				stmt.executeQuery();
+				
+				String query2 = "CALL updateStudent(?, ?, ?, ?);";
+				CallableStatement stmt2 = conn.prepareCall(query2);
+				stmt2.setString(1, username);
+				stmt2.setInt(2, existingStudent);
+				stmt2.setString(3, last);
+				stmt2.setString(4, first);
+				
+				ResultSet rs = stmt2.executeQuery();
+				while (rs.next())
+				{
+					if (rs.getString(1) == "updated")
+					{
+						System.out.println("Selected student's name has been updated.");
+					}
+				}
+			} catch (SQLException e) 
+			{
+				e.printStackTrace();
+			}
+		} else {
+			try 
+			{
+				String query2 = "CALL addStudent1(?, ?, ?, ?);";
+				CallableStatement stmt2 = conn.prepareCall(query2);
+				stmt2.setString(1, username);
+				stmt2.setInt(2, Integer.parseInt(studentID));
+				stmt2.setString(3, last);
+				stmt2.setString(4, first);
+				ResultSet rs = stmt2.executeQuery();
+				while (rs.next())
+				{
+					existingStudent = rs.getInt(1);
+				}
+				
+				String query = "CALL enrollStudent(?, ?);";
+				CallableStatement stmt = conn.prepareCall(query);
+				stmt.setInt(1, existingStudent);
+				stmt.setInt(2, selectedClass);
+				stmt.executeQuery();
+
+			} catch (SQLException e) 
+			{
+				e.printStackTrace();
+			}
+		}
 	}
 	
 
@@ -411,7 +531,27 @@ public class DBManager {
 	 */
 	private static void addAssignment(String name, String category, String description, String points) 
 	{
-		String query = "CALL addAssignment(?, ?, ?, ?);";
+		String categoryCheck = "SELECT cg_id FROM Category WHERE name = '" + category + "'";
+		try {
+			CallableStatement stmt0 = conn.prepareCall(categoryCheck);
+			ResultSet rs = stmt0.executeQuery();
+			if (!rs.next())
+			{
+				System.out.println("Category not found. Please try again.");
+				return;
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+
+		String query = "CALL addAssignment(?, ?, ?, ?, ?);";
+		if (selectedClass == -1)
+		{
+			System.out.println("No class selected to add assignments.");
+			return;
+		}
 		try 
 		{
 			CallableStatement stmt = conn.prepareCall(query);
@@ -419,6 +559,7 @@ public class DBManager {
 			stmt.setString(2, category);
 			stmt.setString(3, description);
 			stmt.setInt(4, Integer.parseInt(points));
+			stmt.setInt(5, selectedClass);
 
 			stmt.executeQuery();
 		} catch (SQLException e) 
@@ -434,14 +575,25 @@ public class DBManager {
 	 */
 	private static void showAssignment() 
 	{
-		String query = "CALL showAssignment();";
+		String query = "CALL showAssignment(?);";
+		if (selectedClass == -1)
+		{
+			System.out.println("No class selected for assignments.");
+			return;
+		}
 		try
 		{
 			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setInt(1, selectedClass);
 			ResultSet rs = stmt.executeQuery();
-			while(rs.next())
-			{
-				System.out.println(rs.getInt(1) + " " + rs.getString(2) + " " + rs.getInt(3) + "\n"); 
+			if (rs.next() == false) 
+			{ 
+				System.out.println("No assignments found for the current class."); 
+			} else { 
+				do {
+					System.out.println(rs.getInt(1) + " " + rs.getString(2) + " " + rs.getString(3) + " " + rs.getInt(4) + "\n"); 
+	                }
+				while (rs.next());
 			}
 		}
 		catch (SQLException e) 
@@ -459,12 +611,24 @@ public class DBManager {
 	 */
 	private static void addCategory(String name, String weight) 
 	{
-		String query = "CALL addCategory(?, ?);";
+		String query = "CALL addCategory(?, ?, ?);";
+		Double decimalWeight = Double.parseDouble(weight)/100;
+		if (decimalWeight > 1)
+		{
+			System.out.println("Number between 0 and 100 expected for weight. i.e. \"25\"");
+			return;
+		}
+		if (selectedClass == -1)
+		{
+			System.out.println("No class selected to add category.");
+			return;
+		}
 		try 
 		{
 			CallableStatement stmt = conn.prepareCall(query);
 			stmt.setString(1, name);
-			stmt.setLong(2, Long.parseLong(weight));
+			stmt.setDouble(2, decimalWeight);
+			stmt.setInt(3, selectedClass);
 			stmt.executeQuery();
 		} 
 		catch (SQLException e) 
@@ -480,14 +644,22 @@ public class DBManager {
 	 */
 	private static void showCategories() 
 	{
-		String query = "CALL showCategories();";
+		String query = "CALL showCategories(?);";
 		try
 		{
 			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setInt(1, selectedClass);
 			ResultSet rs = stmt.executeQuery();
-			while(rs.next())
-			{
-				System.out.println(rs.getInt(1) + " " + rs.getString(2) + " " + rs.getLong(3) + "\n"); 
+			
+			if (rs.next() == false) 
+			{ 
+				System.out.println("No categories found for the current class."); 
+			} else { 
+				do {
+					System.out.println(rs.getInt(1) + " " + rs.getString(2) + " " + rs.getDouble(3) + "\n"); 
+
+	                }
+				while (rs.next());
 			}
 		}
 		catch (SQLException e) 
@@ -548,6 +720,7 @@ public class DBManager {
 					if (year > mostRecentYear)
 					{
 						mostRecentYear = year;
+						mostRecentTerm = term;
 						classID = rs.getInt("c_id");
 						description = rs.getString("description");
 					} else if (year == mostRecentYear)

@@ -33,11 +33,20 @@ CREATE TABLE Student -- s_id is not auto incremented, looks like it should alway
 (
 	s_id INT NOT NULL auto_increment, 
     user_name VARCHAR(20) NOT NULL,
+    studentID INT NOT NULL,
     l_name VARCHAR(20) NOT NULL,
     f_name VARCHAR(20) NOT NULL,
-    c_id INT,
-    PRIMARY KEY (s_id),
-    FOREIGN KEY (c_id) REFERENCES Class(c_id)
+    PRIMARY KEY (s_id)
+);
+
+CREATE TABLE Enrollment
+(
+	e_id INT NOT NULL auto_increment, 
+    s_id INT NOT NULL,
+    c_id INT NOT NULL,
+    PRIMARY KEY (e_id),
+    FOREIGN KEY (c_id) REFERENCES Class(c_id),
+	FOREIGN KEY (s_id) REFERENCES Student(s_id)
 );
 
 CREATE TABLE Assignment -- we should probably get rid of s_id 
@@ -47,8 +56,10 @@ CREATE TABLE Assignment -- we should probably get rid of s_id
     name VARCHAR(20) NOT NULL,
     description VARCHAR(100), 
     point_value INT NOT NULL,
+    c_id INT NOT NULL, 
     PRIMARY KEY (a_id),
-    FOREIGN KEY (cg_id) REFERENCES Category(cg_id)
+    FOREIGN KEY (cg_id) REFERENCES Category(cg_id),
+	FOREIGN KEY (c_id) REFERENCES Class(c_id)
 ); 
 
 CREATE TABLE Grade
@@ -85,7 +96,7 @@ DELIMITER $$
 CREATE PROCEDURE selectClass1(IN c_number0 VARCHAR(10)) 
 BEGIN
 	DECLARE num_of_secs INT;
-    SET num_of_secs = (SELECT COUNT(sec_number) FROM Class GROUP BY term, c_number); -- if there's more than one section, then it'll execute the query & return a result set. Nothing will return otherwise. 
+    SET num_of_secs = (SELECT COUNT(sec_number) FROM Class where c_number = c_number0 GROUP BY term, c_number); -- if there's more than one section, then it'll execute the query & return a result set. Nothing will return otherwise. 
 	IF (num_of_secs = 1) THEN
     SELECT c_id, c_number, term, description
     FROM Class c
@@ -131,44 +142,80 @@ BEGIN
 END $$
 
 DELIMITER $$
-CREATE PROCEDURE addCategory(IN name0 VARCHAR(20), weight0 DECIMAL(2,2)) -- I think there's no relationship between Category and Class? We don't require class to create a new category.
+CREATE PROCEDURE addCategory(IN name0 VARCHAR(20), weight0 DECIMAL(2,2), c_id0 INT) -- I think there's no relationship between Category and Class? We don't require class to create a new category.
 BEGIN
-	INSERT INTO Category (name, weight) VALUES (name0, weight0);
+	INSERT INTO Category (name, weight, c_id) VALUES (name0, weight0, c_id0);
 END $$
 
 DELIMITER $$
-CREATE PROCEDURE showAssignment() -- I am not sure how this is supposed to work. Do we return the sum value of point values grouped by category? 
+CREATE PROCEDURE showAssignment(IN c_id0 INT) -- I am not sure how this is supposed to work. Do we return the sum value of point values grouped by category? 
 BEGIN 
-	SELECT a.cg_id, cg.name, SUM(a.point_value) 
+	SELECT a.cg_id, a.name, cg.name, a.point_value
     FROM Assignment a
     JOIN Category cg ON cg.cg_id = a.cg_id
+    WHERE a.c_id = c_id0
     GROUP BY cg_id;
 END $$
 
 DELIMITER $$
-CREATE PROCEDURE addAssignment(IN name0 VARCHAR(20), name1 VARCHAR(20), description0 VARCHAR(100), point_value0 INT) -- name0 refers to name in Assignment and name1 refers to name in Category. Also I think there's no relationship linking Assignment and Student as we don't require s_id to create a new assignment. 
+CREATE PROCEDURE addAssignment(IN name0 VARCHAR(20), name1 VARCHAR(20), description0 VARCHAR(100), point_value0 INT, c_id0 INT) -- name0 refers to name in Assignment and name1 refers to name in Category. Also I think there's no relationship linking Assignment and Student as we don't require s_id to create a new assignment. 
 BEGIN
 	DECLARE cg_id0 INT;
     SET cg_id0 = (SELECT cg_id FROM Category WHERE name = name1);
-	INSERT INTO Assignment (name, cg_id, description, point_value) VALUES (name0, cg_id0, description0, point_value0);
+	INSERT INTO Assignment (name, cg_id, description, point_value, c_id) VALUES (name0, cg_id0, description0, point_value0, c_id0);
 END $$
 
 
 DELIMITER $$
 CREATE PROCEDURE updateStudent(IN user_name0 VARCHAR(20), s_id0 INT, l_name0 VARCHAR(20), f_name0 VARCHAR(20)) 
 BEGIN
-	IF CONCAT(f_name0, " ", l_name0) != (SELECT CONCAT(f_name0, " ", l_name0) FROM Student s WHERE s.s_id = s_id0) THEN
-		UPDATE Student SET f_name = f_name0, l_name = l_name0 WHERE s_id = s_id0;
+	IF CONCAT(f_name0, " ", l_name0) != (SELECT CONCAT(f_name, " ", l_name) FROM Student s WHERE s.studentID = s_id0) THEN
+		UPDATE Student SET f_name = f_name0, l_name = l_name0 WHERE studentID = s_id0;
         SELECT "updated"; 
+	else
+		select "not updated";
 	END IF;
 END $$
 
 DELIMITER $$
-CREATE PROCEDURE addStudent1(IN user_name0 VARCHAR(20), s_id0 INT, l_name0 VARCHAR(20), f_name0 VARCHAR(20), c_id0 INT) 
+CREATE PROCEDURE addStudent1(IN user_name0 VARCHAR(20), studentID0 INT, l_name0 VARCHAR(20), f_name0 VARCHAR(20)) 
 BEGIN
-	INSERT INTO Student (user_name, s_id, l_name, f_name, c_id) VALUES (user_name0, s_id0, l_name0, f_name0, c_id0);
+	INSERT INTO Student (user_name, studentID, l_name, f_name) VALUES (user_name0, studentID0, l_name0, f_name0);
+    select s_id from Student where studentID = studentID0;
 END $$
 
+DELIMITER $$
+CREATE PROCEDURE enrollStudent(IN s_id0 INT, c_id0 INT) 
+BEGIN
+	INSERT INTO Enrollment (c_id, s_id) VALUES (c_id0, s_id0);
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE checkIfInClass(IN schoolID INT, c_id0 INT) 
+BEGIN
+	select s.s_id from Enrollment 
+    join student s on s.studentID = schoolID 
+    where c_id = c_id0;
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE getStudentID(IN username VARCHAR(20)) 
+BEGIN
+	select s_id from Student where user_name = username;
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE getSchoolID(IN username VARCHAR(20)) 
+BEGIN
+	select studentID from Student where user_name = username;
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE getStudentIDFromSchoolID(IN schoolID INT) 
+BEGIN
+	select s_id, user_name from Student where studentID = schoolID;
+END $$
+    
 DELIMITER $$
 CREATE PROCEDURE addStudent2(IN user_name0 VARCHAR(20), c_id0 INT)
 BEGIN 
