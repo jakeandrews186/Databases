@@ -65,13 +65,10 @@ CREATE TABLE Assignment -- we should probably get rid of s_id
 CREATE TABLE Grade
 (
 	g_id INT NOT NULL AUTO_INCREMENT, 
-    cg_id INT NOT NULL,
     s_id INT NOT NULL,
-    -- c_id INT NOT NULL,
     a_id INT NOT NULL, 
     grade INT, 
     PRIMARY KEY (g_id),
-    FOREIGN KEY (cg_id) REFERENCES Category(cg_id),
     FOREIGN KEY (s_id) REFERENCES Student(s_id),
     FOREIGN KEY (a_id) REFERENCES Assignment(a_id)
 );
@@ -234,32 +231,39 @@ END $$
 DELIMITER $$
 CREATE PROCEDURE showStudents1(IN c_id0 INT)
 BEGIN
-	SELECT * FROM Student WHERE c_id = c_id0;
+	SELECT * FROM Student s
+    join Enrollment e on e.s_id = s.s_id
+    where e.c_id = c_id0;
 END $$
 
 DELIMITER $$
 CREATE PROCEDURE showStudents2(IN str0 VARCHAR(20))
 BEGIN
-	SELECT * FROM Student WHERE l_name LIKE '%str%' OR f_name LIKE '%str0' OR user_name LIKE '%str%';
+	SELECT * FROM Student 
+		WHERE lower(l_name) LIKE lower(CONCAT('%', str0, '%')) 
+        OR lower(f_name) LIKE lower(CONCAT('%', str0, '%')) 
+        OR lower(user_name) LIKE lower(CONCAT('%', str0, '%'));
 END $$
 
 
 DELIMITER $$
-CREATE PROCEDURE assignGrade(IN a_name0 VARCHAR(20), user_name0 VARCHAR(20), grade0 INT)
+CREATE PROCEDURE assignGrade(IN a_id0 INT, s_id0 INT, grade0 INT)
 BEGIN 
     DECLARE grade1 INT;
-    IF (SELECT point_value FROM Assignment WHERE name = a_name0) >= grade0 THEN
-		SET grade1 = (SELECT g.grade FROM Grade 
-						JOIN Assignment a ON a.a_id = g.a_id
-						JOIN Student s ON s.s_id = g.s_id
-						WHERE a.name = a_name0 AND s.user_name = user_name0);
+    IF (SELECT point_value FROM Assignment WHERE a_id = a_id0) >= grade0 THEN
+		SET grade1 = (SELECT g.grade FROM Grade g
+						WHERE g.a_id = a_id0 and g.s_id = s_id0);
+		IF (isnull(grade1)) THEN
+			insert into Grade (a_id, s_id, grade ) values (a_id0, s_id0, grade0);
+		end if;
 		IF grade1 != grade0 THEN
 			UPDATE Grade g SET g.grade = grade0 
-				WHERE g.a_id = (SELECT a.a_id FROM Assignment a WHERE a_name0 = a.name)
-				AND g.s_id = (SELECT s.s_id FROM Student s WHERE user_name0 = s.user_name);
-	END IF;
+				WHERE g.a_id = a_id0
+				AND g.s_id = s_id0;
+		END IF;
+        (SELECT 0);
 	ELSE
-		(SELECT point_value FROM Assignment WHERE name = a_name0); -- if the number of points exceeds the number of points configured for the assignment
+		(SELECT point_value FROM Assignment WHERE a_id = a_id0); -- if the number of points exceeds the number of points configured for the assignment
 	END IF;
 END $$
 
@@ -279,5 +283,32 @@ DELIMITER $$
 CREATE PROCEDURE getStudent(IN username varchar(20))
 BEGIN 
 	select s_id from student where user_name = username;
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE getAssignmentID(IN name0 varchar(20))
+BEGIN 
+	select a_id from assignment where name = name0;
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE getCategoryTotals(c_id0 INT, s_id0 INT)
+BEGIN 
+	select cg.name, SUM(point_value) from assignment
+    join Category cg on a.cg_id = cg.cd_id
+    and a.c_id = c_id0
+	and a.s_id = s_id0
+	group by cg_id;
+END $$
+
+DELIMITER $$
+CREATE PROCEDURE getCategoryEarned( c_id0 INT, s_id0 INT)
+BEGIN 
+	select cg.name, SUM(grade) from Grade
+    join assignment a on a.a_id = g.a_id
+    join Category cg on a.cg_id = cg.cd_id
+    and a.c_id = c_id0
+	and a.s_id = s_id0
+    group by cg_id;
 END $$
 

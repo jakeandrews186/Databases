@@ -147,7 +147,7 @@ public class DBManager {
 			ResultSet rs = stmt.executeQuery();
 			while(rs.next())
 			{
-				studentID = rs.getInt(0);
+				studentID = rs.getInt(1);
 			}
 		}
 		catch (SQLException e) 
@@ -167,42 +167,45 @@ public class DBManager {
 		{
 			CallableStatement stmt = conn.prepareCall(query0);
 			stmt.setInt(1, studentID);
-			stmt.setInt(1, selectedClass);
+			stmt.setInt(2, selectedClass);
 			ResultSet rs = stmt.executeQuery();
-			String category = "";
-			String firstCategory = "";
-			int i = 0;
 			int overall = 0;
 			int overallPossible = 0;
-			int earned = 0;
-			int total = 0;
+			System.out.println("Assignments:");
+			System.out.println();
 			while(rs.next())
 			{
-				if (i==0)
-				{
-					category = rs.getString("Category");
-					firstCategory = rs.getString("Category");
-					i++;
-				}
-				if (rs.getString("Category") != category && rs.getString("Category") != firstCategory)
-				{
-					System.out.println();
-					System.out.println("Category Totals: " + category + " - " + earned + "/" + total);
-					System.out.println();
-
-					category = rs.getString("Category");
-					overall += earned;
-					overallPossible += total;
-					earned = 0;
-					total = 0;
-					
-				}
 				System.out.println(rs.getString("Assignment") + " - " + rs.getInt("grade") + "/" + rs.getInt("point_value") + " - " + rs.getString("Category") );
-				earned += rs.getInt("grade");
-				total += rs.getInt("point_value");
+			}
+			String query1 = "CALL getCategoryEarned(?, ?);";
+
+			CallableStatement stmt1 = conn.prepareCall(query1);
+			stmt1.setInt(2, studentID);
+			stmt1.setInt(1, selectedClass);
+			ResultSet rs2 = stmt1.executeQuery();
+			System.out.println("Category Points Earned:");
+			System.out.println();
+			while(rs2.next())
+			{
+				System.out.println(rs2.getString(1) + " points earned: " + rs2.getInt(2));
+				overall += rs2.getInt(2);
+			}
+			
+			String query2 = "CALL getCategoryTotals(?, ?);";
+
+			CallableStatement stmt2 = conn.prepareCall(query2);
+			stmt2.setInt(2, studentID);
+			stmt2.setInt(1, selectedClass);
+			ResultSet rs3 = stmt2.executeQuery();
+			System.out.println("Category Points Possible:");
+			System.out.println();
+			while(rs3.next())
+			{
+				System.out.println(rs3.getString(1) + " points possible: " + rs3.getInt(2));
+				overallPossible += rs3.getInt(2);
 			}
 			System.out.println();
-			System.out.println("Totals for this class: " + overall + "/" + overallPossible);
+			System.out.println("Total for this class: " + overall + "/" + overallPossible);
 
 		}
 		catch (SQLException e) 
@@ -225,24 +228,73 @@ public class DBManager {
 	private static void grade(String assignment, String username, String grade) 
 	{
 		String query = "CALL assignGrade(?, ?, ?);";
+		if (selectedClass == -1)
+		{
+			System.out.println("No class currently selected.");
+			return;
+		}
+		int studentID = -1;
+		String query0 = "CALL getStudentID(?);";
+
+		try 
+		{
+			CallableStatement stmt = conn.prepareCall(query0);
+			stmt.setString(1, username);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next())
+			{
+				studentID = rs.getInt(1);
+			}
+			
+		} catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		if (studentID == -1)
+		{
+			System.out.println("Student not found with username: " + username);
+			return;
+		}
+		int assignmentID = -1;
+		String query2 = "CALL getAssignmentID(?);";
+
+		try 
+		{
+			CallableStatement stmt = conn.prepareCall(query2);
+			stmt.setString(1, assignment);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next())
+			{
+				assignmentID = rs.getInt(1);
+			}
+			
+		} catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		if (assignmentID == -1)
+		{
+			System.out.println("Assignment not found with name: " + assignment);
+			return;
+		}
 		
-		//assignGrade(IN a_name0 VARCHAR(20), user_name0 VARCHAR(20), grade0 INT)
+		
 		try
 		{
 			CallableStatement stmt = conn.prepareCall(query);
-			stmt.setString(1, assignment);
-			stmt.setString(2, username);
+			stmt.setInt(1, assignmentID);
+			stmt.setInt(2, studentID);
 			stmt.setInt(3, Integer.parseInt(grade));
 			ResultSet rs = stmt.executeQuery();
 			
-			if(!rs.first()) // if the number of points does not exceed the number of points configured for the assignment
+			while(rs.next()) // if the number of points does not exceed the number of points configured for the assignment
 			{
+				if (rs.getInt(1) > 0) {
+					System.out.println("The number of points entered exceeds the number of points configured for the assignment(" + rs.getInt(1) + ")");
+				}
 				return;
 			}
-			else
-			{
-				System.out.println("The number of points entered exceeds the number of points configured for the assignment(" + rs.getInt(1) + ")");
-			}
+
 		}
 		catch (SQLException e) 
 		{
@@ -263,11 +315,18 @@ public class DBManager {
 			CallableStatement stmt = conn.prepareCall(query);
 			stmt.setString(1, string);
 			ResultSet rs = stmt.executeQuery();
-			while(rs.next())
-			{
-                System.out.println("Students with " + string + " " + "in their name or user name: " + rs.getInt("s_id") + " " + rs.getString("user_name") + " " + 
-                		rs.getString("l_name") + " " + rs.getString("f_name"));
+			
+			if (rs.next() == false) 
+			{ 
+				System.out.println("No students with " + string + " in their name or user name."); 
+			} else { 
+				System.out.println("Students with " + string + " in their name or user name: ");
+				do {
+	                System.out.println(rs.getInt("s_id") + " " + rs.getString("user_name") + " " + 
+	                		rs.getString("l_name") + " " + rs.getString("f_name"));
 
+	                }
+				while (rs.next());
 			}
 		}
 		catch (SQLException e) 
@@ -294,11 +353,17 @@ public class DBManager {
 			CallableStatement stmt = conn.prepareCall(query);
 			stmt.setInt(1, selectedClass);
 			ResultSet rs = stmt.executeQuery();
-			while(rs.next())
-			{
-                System.out.println("Students in Current Class: " + rs.getInt("s_id") + " " + rs.getString("user_name") + " " + 
-                		rs.getString("l_name") + " " + rs.getString("f_name"));
+			if (rs.next() == false) 
+			{ 
+				System.out.println("No students in current class."); 
+			} else { 
+				System.out.println("Students in Current Class: ");
+				do {
+	                System.out.println(rs.getInt("s_id") + " " + rs.getString("user_name") + " " + 
+	                		rs.getString("l_name") + " " + rs.getString("f_name"));
 
+	                }
+				while (rs.next());
 			}
 		}
 		catch (SQLException e) 
