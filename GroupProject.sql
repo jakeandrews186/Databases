@@ -158,7 +158,7 @@ DELIMITER $$
 CREATE PROCEDURE addAssignment(IN name0 VARCHAR(20), name1 VARCHAR(20), description0 VARCHAR(100), point_value0 INT, c_id0 INT) -- name0 refers to name in Assignment and name1 refers to name in Category. Also I think there's no relationship linking Assignment and Student as we don't require s_id to create a new assignment. 
 BEGIN
 	DECLARE cg_id0 INT;
-    SET cg_id0 = (SELECT cg_id FROM Category WHERE name = name1);
+    SET cg_id0 = (SELECT cg_id FROM Category WHERE name = name1 and c_id = c_id0);
 	INSERT INTO Assignment (name, cg_id, description, point_value, c_id) VALUES (name0, cg_id0, description0, point_value0, c_id0);
 END $$
 
@@ -188,11 +188,11 @@ BEGIN
 END $$
 
 DELIMITER $$
-CREATE PROCEDURE checkIfInClass(IN schoolID INT, c_id0 INT) 
+CREATE PROCEDURE checkIfInClass(IN s_id0 INT, c_id0 INT) 
 BEGIN
-	select s.s_id from Enrollment 
-    join student s on s.studentID = schoolID 
-    where c_id = c_id0;
+	select s_id from Enrollment 
+    where c_id = c_id0
+    and s_id = s_id0;
 END $$
 
 DELIMITER $$
@@ -294,21 +294,59 @@ END $$
 DELIMITER $$
 CREATE PROCEDURE getCategoryTotals(c_id0 INT, s_id0 INT)
 BEGIN 
-	select cg.name, SUM(point_value) from assignment
-    join Category cg on a.cg_id = cg.cd_id
-    and a.c_id = c_id0
-	and a.s_id = s_id0
-	group by cg_id;
+	select cg.name, SUM(point_value) from assignment a
+    join grade g on g.a_id = a.a_id
+    join Category cg on a.cg_id = cg.cg_id
+	where g.s_id = s_id0
+	and a.c_id = c_id0
+	group by cg.cg_id;
 END $$
 
 DELIMITER $$
 CREATE PROCEDURE getCategoryEarned( c_id0 INT, s_id0 INT)
 BEGIN 
-	select cg.name, SUM(grade) from Grade
+	select cg.name, SUM(grade) from Grade g
     join assignment a on a.a_id = g.a_id
-    join Category cg on a.cg_id = cg.cd_id
-    and a.c_id = c_id0
-	and a.s_id = s_id0
-    group by cg_id;
+    join Category cg on a.cg_id = cg.cg_id
+	where g.s_id = s_id0
+	and a.c_id = c_id0
+    group by cg.cg_id;
 END $$
+
+DELIMITER $$
+CREATE PROCEDURE getGradebook(IN c_id0 INT, s_id0 INT)
+BEGIN 
+IF (select SUM(weight) from Grade g join student s on g.s_id = s.s_id
+join assignment a on a.a_id = g.a_id
+join category cg on cg.cg_id = a.cg_id
+where a.c_id = c_id0) < 1 THEN 
+select distinct (select sum(percent) from 
+(select (SUM(grade)/ SUM(point_value)* weight) as percent, 
+s.user_name as username, 
+s.studentID as id, 
+concat(s.f_name, ' ', s.l_name) as student 
+from assignment a
+join grade g on a.a_id = g.a_id
+join category cg on cg.cg_id = a.cg_id
+join student s on g.s_id = s.s_id
+where s.s_id = s_id0 and a.c_id = c_id0
+group by a.cg_id) t1)/SUM(weight)*100 as percentage from category cg
+where cg.c_id = c_id0;
+ ELSE
+select distinct (select sum(percent) from 
+(select (SUM(grade)/ SUM(point_value)* weight) as percent, 
+s.user_name as username, 
+s.studentID as id, 
+concat(s.f_name, ' ', s.l_name) as student 
+from assignment a
+join grade g on a.a_id = g.a_id
+join category cg on cg.cg_id = a.cg_id
+join student s on g.s_id = s.s_id
+where s.s_id = s_id0 and a.c_id = c_id0
+group by a.cg_id) t1)*100 as percentage from category cg
+where cg.c_id = c_id0;
+END IF;
+END $$
+
+
 

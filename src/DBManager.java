@@ -6,6 +6,8 @@ import java.util.Set;
 import java.sql.*;
 import java.awt.List;
 import java.lang.*;
+import java.math.BigDecimal;
+import java.math.MathContext;
 
 /**
  * Class for the database manager for CS410
@@ -112,20 +114,64 @@ public class DBManager {
 		name), along with their total grades in the class.
 	 */
 	private static void showGradebook() {
-		// TODO Auto-generated method stub
-		
-		Statement stmt;
-		try {
-			stmt = conn.createStatement();
-			ResultSet rs=stmt.executeQuery("select * from grade");  
-			while(rs.next())
+		String query = "CALL showStudents1(?);";
+		try
+		{
+			if (selectedClass == -1)
 			{
-				System.out.println(rs.getInt(1)+"  "+rs.getString(2)+"  "+rs.getString(3));  
+				System.out.println("No class currently selected.");
+				return;
 			}
-		} catch (SQLException e) {
+			
+			CallableStatement stmt = conn.prepareCall(query);
+			stmt.setInt(1, selectedClass);
+	        MathContext m = new MathContext(4);
+
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next() == false) 
+			{ 
+				System.out.println("No students in current class."); 
+			} else { 
+				System.out.println("Username    |   Student ID  |  Full Name  |  Total Percentage");
+				do {
+					System.out.print("\n" + rs.getString(2) + " - " + rs.getString(3) + " - " + rs.getString(5) + " " + rs.getString(4) + " - ");
+					int id = Integer.parseInt(rs.getString(1));
+					String query1 = "CALL getGradebook(?, ?);";
+					try
+					{
+						CallableStatement stmt1 = conn.prepareCall(query1);
+						stmt1.setInt(1, selectedClass);
+						stmt1.setInt(2, id);
+						ResultSet rs1 = stmt1.executeQuery();
+						while(rs1.next())
+						{
+							try {
+								BigDecimal bd = rs1.getBigDecimal(1).round(m);
+								System.out.print(bd);
+							}
+							catch (NullPointerException e)
+							{
+								System.out.print("No Grades\n");
+							}
+
+						}
+					}
+					catch (SQLException e) 
+					{
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}	
+	                }
+				while (rs.next());
+				System.out.println();
+			}
+		}
+		catch (SQLException e) 
+		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}  		
+		}
+
 	}
 
 	/**
@@ -409,28 +455,12 @@ public class DBManager {
 			System.out.println("Student not found with username: " + username);
 			return;
 		}
-		String query2 = "CALL getSchoolID(?);";
-		
-		int schoolID = 0;
-		try 
-		{
-			CallableStatement stmt = conn.prepareCall(query2);
-			stmt.setString(1, username);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next())
-			{
-				schoolID = rs.getInt(1);
-			}
-			
-		} catch (SQLException e) 
-		{
-			e.printStackTrace();
-		}
+
 		String check = "CALL checkIfInClass(?, ?);";
 		try 
 		{
 			CallableStatement stmt = conn.prepareCall(check);
-			stmt.setInt(1, schoolID);
+			stmt.setInt(1, studentID);
 			stmt.setInt(2, selectedClass);
 
 			ResultSet rs = stmt.executeQuery();
@@ -721,7 +751,7 @@ public class DBManager {
 				System.out.println("No categories found for the current class."); 
 			} else { 
 				do {
-					System.out.println(rs.getInt(1) + " " + rs.getString(2) + " " + rs.getDouble(3) + "\n"); 
+					System.out.println(rs.getString(2) + " " + rs.getDouble(3) + "\n"); 
 
 	                }
 				while (rs.next());
