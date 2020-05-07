@@ -110,7 +110,7 @@ public class DBManager {
 	}
 
 	/**
-	 * show the current class’s gradebook: students (username, student ID, and
+	 * show the current class's gradebook: students (username, student ID, and
 		name), along with their total grades in the class.
 	 */
 	private static void showGradebook() {
@@ -175,8 +175,8 @@ public class DBManager {
 	}
 
 	/**
-	 * show student’s current grade: all assignments, visually
-		grouped by category, with the student’s grade (if they have one). Show subtotals for each
+	 * show student's current grade: all assignments, visually
+		grouped by category, with the student's grade (if they have one). Show subtotals for each
 		category, along with the overall grade in the class.
 	 * @param username
 	 */
@@ -262,8 +262,8 @@ public class DBManager {
 	}
 
 	/**
-	 * assign the grade ‘grade’ for student
-		with user name ‘username’ for assignment ‘assignmentname’. If the student already has a
+	 * assign the grade 'grade' for student
+		with user name 'username' for assignment 'assignmentname'. If the student already has a
 		grade for that assignment, replace it. If the number of points exceeds the number of
 		points configured for the assignment, print a warning (showing the number of points
 		configured).
@@ -350,7 +350,7 @@ public class DBManager {
 	}
 
 	/**
-	 * show all students with ‘string’ in their name or username (case-insensitive)
+	 * show all students with 'string' in their name or username (case-insensitive)
 	 * @param string
 	 */
 	private static void showStudents(String string) 
